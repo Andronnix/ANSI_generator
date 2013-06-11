@@ -1,0 +1,146 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<style>
+		div	{
+			margin: 5px;
+		}
+		.content {
+			float:left;
+			display:block;
+		}
+		.dropAreaOut {
+			border: 5px solid #cccccc;
+			border-radius: 20px;			
+
+			width: 200px;
+			height: 50px;
+			line-height: 50px;
+		}
+		.dropAreaOut:hover {
+			border-color: #aaaaaa;
+			background-color: #dddddd;
+		}
+		#dropArea {
+			/*display:block;*/
+			vertical-align: middle;
+			text-align: center;
+			font-family: Verdana, Arial, Helvetica, sans-serif;
+			font-size: 12pt;
+		}
+	</style>
+	<script>
+		var sourceCanvas = sourceCtx = null;
+		var processedCanvas = processedCtx = null;
+		var imageSource = null;
+		var cellSize = 10;
+
+		// Загружает изображение из “области приема”.
+		var loadFromArea = function(event) {
+			event.stopPropagation();
+			event.preventDefault();
+			loadFile(event.dataTransfer.files[0]);
+			console.log("File dropped");
+		};
+		// Обработчик события dragover “области приема”.
+		var areaDragOverHandler = function(event) {
+			event.stopPropagation();
+			event.preventDefault();
+			event.dataTransfer.dropEffect = "copy";
+		};
+
+		// Записывает содержимое файла в виде строки в переменную imageData.
+		var loadFile = function(file) {
+			var reader = new FileReader();
+			reader.onload = function(data)
+			{				
+				//result used to copy data array
+				var result = data.target.result;
+
+				delete imageSource;
+				imageSource = new Image();
+				imageSource.src = result;
+
+				showSourceImage(imageSource);
+				
+			}
+			reader.readAsDataURL(file);
+		}		
+
+		var showSourceImage = function(image){
+			sourceCanvas.width = image.width;
+			sourceCanvas.height = image.height;
+			sourceCtx.drawImage(image, 0, 0);
+			console.log("image");
+		}
+
+
+		var processImage = function(){
+			console.log("Start processing");
+
+			var w = imageSource.width, h = imageSource.height;			
+			var imageData = sourceCtx.getImageData(0, 0, w, h);
+			var imgArr = imageData.data, length = imgArr.length;
+
+			var p = 0, c = 0;
+			//array: 4 components [r,g,b,a] for each pixel
+			for(var i = 0; i < h; i++){
+				for(var j = 0; j < w; j++){
+					p = (i * w + j)* 4; 
+					imgArr[p + 0] = 255 - imgArr[p + 0];
+					imgArr[p + 1] = 255 - imgArr[p + 1];
+					imgArr[p + 2] = 255 - imgArr[p + 2];
+					c++;
+				}
+			}
+			processedCanvas.width = w;
+			processedCanvas.height = h;
+			processedCtx.putImageData(imageData, 0, 0);
+			console.log("Processing complete!");
+		}
+
+		//Creates canvas, sets event handlers, etc		
+		var init = function() {
+			console.log('Inintialization..');
+
+
+			sourceCanvas = document.getElementById("sourceImageCanvas");
+			sourceCtx = sourceCanvas.getContext("2d");
+
+			processedCanvas = document.getElementById("processedImageCanvas");
+			processedCtx = processedCanvas.getContext("2d");
+
+			// Присваиваем необходимые обработчики.
+			// Для “области приема”.
+			document.getElementById("dropArea").addEventListener("drop", loadFromArea, false);
+			document.getElementById("dropArea").addEventListener("dragover", areaDragOverHandler, false);
+
+
+			console.log('Inintialization complete');
+		}
+
+	</script>
+</HEAD>
+<BODY onload="init()">
+<div class="content">
+	<div class="settings">
+		<div class="dropAreaOut">
+			<div id="dropArea">
+				Drop your image here
+			</div>			
+		</div>
+		<input type="button" value="Process image" onclick="processImage();">
+	</div>
+	<div class="imageViwer" ondrop="return false;">
+		<canvas id="sourceImageCanvas"></canvas>
+		<canvas id="processedImageCanvas"></canvas>
+	</div>
+
+
+
+		<!-- <input type="button" value="Start" id="startBtn" onclick="start()">
+		<input type="button" value="Stop" id="stopBtn" onclick="stop()"> -->
+
+</div>
+</BODY>
+</HTML>
