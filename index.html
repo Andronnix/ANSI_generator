@@ -96,7 +96,7 @@
 		var processImage = function(){
 			console.log("Start processing");
 
-			var ANSI = "", letter = "m";
+			var ANSI = "", letters = document.getElementById("letters").value;
 
 			var cellSize = parseInt(document.getElementById("cellSizeValue").value);
 			var w = imageSource.width, h = imageSource.height;			
@@ -124,7 +124,8 @@
 					color[2] = color[2] / color[3];
 
 					//add letter to ANSI image
-					ANSI += "<font color=" + colorToRGB(color[0], color[1], color[2]) + ">"+letter+"</font>";
+					ANSI += "<font color=" + colorToRGB(color[0], color[1], color[2]) + ">"+letters[c]+"</font>";
+					c = (c + 1) % letters.length;
 
 					//set all pixels in cell to average color
 					for(hi = 0; hi < cellSize && i + hi < h; hi++) {
@@ -182,6 +183,7 @@
 				Drop your image here
 			</div>			
 		</div>
+		Your text: <input type="text" value="m" id="letters">
 		<input id="cellSizeValue" type="number" min="1" max="20" step="1" value="5">
 		<input type="button" value="Process image" onclick="processImage();">
 	</div>
