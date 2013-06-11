@@ -2,6 +2,11 @@
 <HTML>
 <HEAD>
 	<style>
+		#ANSItext {
+			font-family: monospace;
+			font-size: 10pt;
+			line-height: 0.8em;
+		}
 		div	{
 			margin: 5px;
 		}
@@ -61,6 +66,10 @@
 				imageSource.onload = function(){
 					showSourceImage(imageSource);
 				}
+
+				processedCanvas.width = 0;
+				processedCanvas.height = 0;
+				document.getElementById("ANSItext").innerHTML = "";
 				
 			}
 			reader.readAsDataURL(file);
@@ -74,9 +83,20 @@
 			console.log("image");
 		}
 
+		var colorToRGB = function(r,g,b){
+			function dec2hex(a){
+				var r = a.toString(16);
+				if(r.length === 1) r = "0" + r;
+				return r;
+			}
+			return "#" + dec2hex(r|0) + dec2hex(g|0) + dec2hex(b|0);
+		}
+
 
 		var processImage = function(){
 			console.log("Start processing");
+
+			var ANSI = "", letter = "m";
 
 			var cellSize = parseInt(document.getElementById("cellSizeValue").value);
 			var w = imageSource.width, h = imageSource.height;			
@@ -96,24 +116,35 @@
 							color[1] += imgArr[p + 1];
 							color[2] += imgArr[p + 2];
 							color[3]++;
-						}
+						}					
 					}
+					//calculate average color
 					color[0] = color[0] / color[3];
 					color[1] = color[1] / color[3];
 					color[2] = color[2] / color[3];
+
+					//add letter to ANSI image
+					ANSI += "<font color=" + colorToRGB(color[0], color[1], color[2]) + ">"+letter+"</font>";
+
+					//set all pixels in cell to average color
 					for(hi = 0; hi < cellSize && i + hi < h; hi++) {
 						for(wj = 0; wj < cellSize && j + wj < w; wj++) {
 							p = ((i + hi) * w + j + wj) * 4; 
 							imgArr[p + 0] = color[0];
 							imgArr[p + 1] = color[1];
 							imgArr[p + 2] = color[2];
+
 						}
 					}
 				}
+				ANSI += "<br>";
 			}
+
 			processedCanvas.width = w;
 			processedCanvas.height = h;
 			processedCtx.putImageData(imageData, 0, 0);
+
+			document.getElementById("ANSItext").innerHTML = ANSI;
 			console.log("Processing complete!");
 		}
 
@@ -158,7 +189,8 @@
 		<canvas id="sourceImageCanvas"></canvas>
 		<canvas id="processedImageCanvas"></canvas>
 	</div>
-
+	<div id="ANSItext">
+	</div>
 
 
 		<!-- <input type="button" value="Start" id="startBtn" onclick="start()">
