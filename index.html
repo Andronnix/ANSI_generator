@@ -33,7 +33,6 @@
 		var sourceCanvas = sourceCtx = null;
 		var processedCanvas = processedCtx = null;
 		var imageSource = null;
-		var cellSize = 10;
 
 		// Загружает изображение из “области приема”.
 		var loadFromArea = function(event) {
@@ -56,18 +55,19 @@
 			{				
 				//result used to copy data array
 				var result = data.target.result;
-
 				delete imageSource;
 				imageSource = new Image();
 				imageSource.src = result;
-
-				showSourceImage(imageSource);
+				imageSource.onload = function(){
+					showSourceImage(imageSource);
+				}
 				
 			}
 			reader.readAsDataURL(file);
 		}		
 
 		var showSourceImage = function(image){
+			console.log(image);
 			sourceCanvas.width = image.width;
 			sourceCanvas.height = image.height;
 			sourceCtx.drawImage(image, 0, 0);
@@ -78,19 +78,37 @@
 		var processImage = function(){
 			console.log("Start processing");
 
+			var cellSize = parseInt(document.getElementById("cellSizeValue").value);
 			var w = imageSource.width, h = imageSource.height;			
 			var imageData = sourceCtx.getImageData(0, 0, w, h);
 			var imgArr = imageData.data, length = imgArr.length;
 
 			var p = 0, c = 0;
+			var i = j = hi = hj = 0;
 			//array: 4 components [r,g,b,a] for each pixel
-			for(var i = 0; i < h; i++){
-				for(var j = 0; j < w; j++){
-					p = (i * w + j)* 4; 
-					imgArr[p + 0] = 255 - imgArr[p + 0];
-					imgArr[p + 1] = 255 - imgArr[p + 1];
-					imgArr[p + 2] = 255 - imgArr[p + 2];
-					c++;
+			for(i = 0; i < h; i += cellSize){
+				for(j = 0; j < w; j += cellSize){
+					var color = [0, 0, 0, 0];
+					for(hi = 0; hi < cellSize && i + hi < h; hi++) {
+						for(wj = 0; wj < cellSize && j + wj < w; wj++) {
+							p = ((i + hi) * w + j + wj) * 4; 
+							color[0] += imgArr[p + 0];
+							color[1] += imgArr[p + 1];
+							color[2] += imgArr[p + 2];
+							color[3]++;
+						}
+					}
+					color[0] = color[0] / color[3];
+					color[1] = color[1] / color[3];
+					color[2] = color[2] / color[3];
+					for(hi = 0; hi < cellSize && i + hi < h; hi++) {
+						for(wj = 0; wj < cellSize && j + wj < w; wj++) {
+							p = ((i + hi) * w + j + wj) * 4; 
+							imgArr[p + 0] = color[0];
+							imgArr[p + 1] = color[1];
+							imgArr[p + 2] = color[2];
+						}
+					}
 				}
 			}
 			processedCanvas.width = w;
@@ -118,6 +136,10 @@
 
 			console.log('Inintialization complete');
 		}
+		var updateCellSize = function(){
+			console.log("changed");
+			document.getElementById("cellSizeValueNumber").value = document.getElementById("cellSizeValue").value;
+		}
 
 	</script>
 </HEAD>
@@ -129,6 +151,7 @@
 				Drop your image here
 			</div>			
 		</div>
+		<input id="cellSizeValue" type="number" min="1" max="20" step="1" value="5">
 		<input type="button" value="Process image" onclick="processImage();">
 	</div>
 	<div class="imageViwer" ondrop="return false;">
